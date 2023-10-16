@@ -1,0 +1,73 @@
+clc;
+load("deathrate.mat");
+deathrate=deathrate./sum(deathrate); % 死亡模式
+% sum(deathrate)
+count=1;
+deathrate_perage=zeros(1,100);
+for i=1:100
+    deathrate_perage(i)=deathrate(count)./5;
+    if mod(i,5)~=0
+        continue
+    else
+        count=count+1;
+    end
+end
+% sum(deathrate_perage)
+D=diag(deathrate_perage(1:99),-1);
+D(100,100)=D(100,99);
+C=diag(ones([1,99]),-1);
+C(100,100)=1;
+% alpha=?; % 总和死亡率
+% S=C-alpha.*D; % 存活率矩阵
+
+% 总和生育率
+beta=ones(1,21)./2;
+for i=1:20
+    beta(i+1)=beta(i)+0.05;
+end
+load("childbearingage.mat");
+y=mean(childbearingage(:,2:6),2);
+h=y/sum(y); % 生育模式
+B=zeros(100,100); % 生育模式矩阵
+for i=15:49
+    B(1,i)=h(i-14);
+end
+result=zeros(40,21);
+load("population.mat");
+
+figure(1)
+
+plot(0:1:99,population)
+
+x1=sum(population);
+for i=1:21
+    population2=population;
+    alpha=0.614*5+exp(beta(i)); % 总和死亡率 0.614*5：2010年总和死亡率
+    for j=1:50 % 2010-2060 年
+        population2=(C-alpha.*D)*population2+beta(i)*B*population2;
+        result(j,i)=sum(population2);
+    end
+
+    switch(i)
+        case(1)
+            figure(2)
+            bar(['儿童期';'生育期';'中年期';'老年期'],popstructure(population2));
+        case(10)
+            figure(3)
+            bar(['儿童期';'生育期';'中年期';'老年期'],popstructure(population2));
+        case(21)
+            figure(4)
+            bar(0:1:99,popstructure(population2));
+            hold off
+    end
+end
+start_pop=x1.*ones(1,21);
+
+% 不同总和生育率下到2060年的人口
+figure(2)
+hold on
+xlabel('总和生育率\beta')
+ylabel('人口')
+plot(1:0.1:3,result(50,:),'b-o')
+plot(1:0.1:3,start_pop,'--')
+hold off
